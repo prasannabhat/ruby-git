@@ -665,6 +665,36 @@ module Git
              (current_version[3] ? current_version[3] >= required_version[3] : true)
     end
 
+    def my_command(cmd, opts = [], chdir = true, redirect = '', &block)
+      ENV['GIT_DIR'] = @git_dir
+      ENV['GIT_INDEX_FILE'] = @git_index_file
+      ENV['GIT_WORK_TREE'] = @git_work_dir
+      path = @git_work_dir || @git_dir || @path
+
+      opts = [opts].flatten.map {|s| escape(s) }.join(' ')
+      git_cmd = "git #{cmd} #{opts} #{redirect} 2>&1"
+
+      out = nil
+      if chdir && (Dir.getwd != path)
+        Dir.chdir(path) { out = run_command(git_cmd, &block) } 
+      else
+        out = run_command(git_cmd, &block)
+      end
+      
+      if @logger
+        @logger.info(git_cmd)
+        @logger.debug(out)
+      end
+            
+      if $?.exitstatus > 0
+        if $?.exitstatus == 1 && out == ''
+          return ''
+        end
+        raise Git::GitExecuteError.new(git_cmd + ':' + out.to_s) 
+      end
+      out
+    end
+
 
     private
     

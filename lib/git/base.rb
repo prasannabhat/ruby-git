@@ -473,6 +473,12 @@ module Git
       self.lib.branch_current
     end
 
+    def command(cmd)
+      puts "Running command #{cmd}\n"
+      out = self.lib.my_command cmd
+      out
+    end
+
     
   end
   
